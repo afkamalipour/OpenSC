@@ -1454,8 +1454,10 @@ pkcs15_create_tokens(struct sc_pkcs11_card *p11card, struct sc_app_info *app_inf
 	/* Find out framework data corresponding to the given application */
 	fw_data = get_fw_data(p11card, app_info, &idx);
 	if (!fw_data)   {
-		sc_log(context, "Create slot for the non-binded card");
-		pkcs15_create_slot(p11card, NULL, NULL, app_info, &slot);
+		if (p11card) {
+			sc_log(context, "Create slot for the non-binded card");
+			pkcs15_create_slot(p11card, NULL, NULL, app_info, &slot);
+		}
 		return CKR_OK;
 	}
 	sc_log(context, "Use FW data with index %i; fw_data->p15_card %p", idx, fw_data->p15_card);
@@ -2348,9 +2350,10 @@ pkcs15_create_secret_key(struct sc_pkcs11_slot *slot, struct sc_profile *profile
 			break;
 		case CKA_VALUE:
 			if (attr->pValue) {
+				free(args.key.data);
 				args.key.data = calloc(1,attr->ulValueLen);
 				if (!args.key.data)
-				return CKR_HOST_MEMORY;
+					return CKR_HOST_MEMORY;
 				memcpy(args.key.data, attr->pValue, attr->ulValueLen);
 				args.key.data_len = attr->ulValueLen;
 			}
@@ -5704,6 +5707,8 @@ register_mechanisms(struct sc_pkcs11_card *p11card)
 
 	if (aes_max_key_size > 0) {
 		rc = sc_pkcs11_register_aes_mechanisms(p11card, aes_flags, aes_min_key_size, aes_max_key_size);
+		if (rc != CKR_OK)
+			return rc;
 	}
 
 

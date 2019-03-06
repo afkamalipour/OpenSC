@@ -265,6 +265,10 @@ int main(int argc, char *argv[])
 	else   if (!do_list_sdos) {
 		r = sc_pkcs15_bind(card, NULL, &p15card);
 	}
+	if (r != SC_SUCCESS) {
+		fprintf(stderr, "Failed to bind card: %s\n", sc_strerror(r));
+		goto end;
+	}
 
 	if (do_list_sdos) {
 		if ((err = list_sdos(opt_sdo_tag)))
@@ -284,8 +288,7 @@ end:
 		sc_unlock(card);
 		sc_disconnect_card(card);
 	}
-	if (ctx)
-		sc_release_context(ctx);
+	sc_release_context(ctx);
 
 	return err;
 }
